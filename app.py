@@ -4,12 +4,6 @@
 
 #Author: Awad Ahmed
 #Comments:
-#Edited form files so i can add websites and image links to my artist and venues
-#Added delete but implemented javascript fetch to work the button
-#deleting a venue deletes the show entirely "cascade"
-#did not add delete button for artist because artist will exist forever but venues dont
-#corrected codes in forms because genres was showing states so i changed that as well also code was showing in html
-#^^ all that means i just edited the new_artist and venue html
 
 import collections
 import json
