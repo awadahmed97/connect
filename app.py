@@ -16,6 +16,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from functools import wraps
 from flask_migrate import Migrate
 import os
 
@@ -130,7 +131,27 @@ app.jinja_env.filters['datetime'] = format_datetime
 # Controllers.
 #----------------------------------------------------------------------------#
 
+app.secret_key = 'my precious'
+
+def login_required(test):
+  @wraps(test)
+  def wrap(*args, **kwargs):
+    if 'logged_in' in session:
+      return test(*args, **kwargs)
+    else:
+      return render_template('index.html')
+  return wrap
+
 @app.route('/')
+def home():
+  return render_template('pages/home.html')
+
+@app.route('/logout')
+def logout():
+  session.pop('logged_in', None)
+  return render_template('index.html')
+
+
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     if (request.method == 'POST'):
@@ -138,6 +159,7 @@ def index():
             password = request.form['password']
             try:
                 auth.sign_in_with_email_and_password(email, password)
+                session['logged_in'] = True
                 #user_id = auth.get_account_info(user['idToken'])
                 #session['usr'] = user_id
                 return render_template('pages/home.html')
@@ -145,6 +167,7 @@ def index():
                 unsuccessful = 'Please check your credentials'
                 return render_template('index.html', umessage=unsuccessful)
     return render_template('index.html')
+
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
@@ -163,9 +186,7 @@ def forgot_password():
             return render_template('index.html')
     return render_template('forgot_password.html')
 
-@app.route('/home', methods=['GET', 'POST'])
-def home():
-    return render_template('pages/home.html')
+
 
 
 
@@ -254,11 +275,13 @@ def show_venue(venue_id):
 #  ----------------------------------------------------------------
 
 @app.route('/venues/create', methods=['GET'])
+@login_required
 def create_venue_form():
   form = VenueForm()
   return render_template('forms/new_venue.html', form=form)
 
 @app.route('/venues/create', methods=['POST'])
+@login_required
 def create_venue_submission():
   #error = False
   try:
@@ -285,6 +308,7 @@ def create_venue_submission():
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
+@login_required
 def delete_venue(venue_id):
   try:
     venue = Venue.query.get(venue_id)
@@ -442,6 +466,7 @@ def show_artist(artist_id):
 #  Update
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
+@login_required
 def edit_artist(artist_id):
   form = ArtistForm()
   artist = Artist.query.get(artist_id)
@@ -461,6 +486,7 @@ def edit_artist(artist_id):
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
+@login_required
 def edit_artist_submission(artist_id):
   # artist record with ID <artist_id> using the new attributes
   try:
@@ -483,6 +509,7 @@ def edit_artist_submission(artist_id):
   return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
+@login_required
 def edit_venue(venue_id):
   form = VenueForm()
   venue = Venue.query.get(venue_id)
@@ -502,6 +529,7 @@ def edit_venue(venue_id):
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
+@login_required
 def edit_venue_submission(venue_id):
   try:
     venue = Venue.query.get(venue_id)
@@ -529,11 +557,13 @@ def edit_venue_submission(venue_id):
 #  ----------------------------------------------------------------
 
 @app.route('/artists/create', methods=['GET'])
+@login_required
 def create_artist_form():
   form = ArtistForm()
   return render_template('forms/new_artist.html', form=form)
 
 @app.route('/artists/create', methods=['POST'])
+@login_required
 def create_artist_submission():
   try:
     artist = Artist(
@@ -618,11 +648,13 @@ def shows():
   return render_template('pages/shows.html', shows=data)
 
 @app.route('/shows/create')
+@login_required
 def create_shows():
   form = ShowForm()
   return render_template('forms/new_show.html', form=form)
 
 @app.route('/shows/create', methods=['POST'])
+@login_required
 def create_show_submission():
   try:
     show = Show(
