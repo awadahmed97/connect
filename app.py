@@ -4,12 +4,12 @@
 
 #Author: Awad Ahmed
 #Comments:
-
+import pyrebase
 import collections
 import json
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, session
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -17,6 +17,8 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
+import os
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -24,8 +26,23 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
-
 migrate = Migrate(app, db)
+
+
+
+config = {
+    "apiKey": "AIzaSyA6iyXIug79EHElqvtEbWmMLa2upq5E3q8",
+    "authDomain": "connect-ad366.firebaseapp.com",
+    "databaseURL": "https://connect-ad366.firebaseio.com",
+    "projectId": "connect-ad366",
+    "storageBucket": "connect-ad366.appspot.com",
+    "messagingSenderId": "377240638078",
+    "appId": "1:377240638078:web:5aecbd0bf1cf38f2ad3e2f"
+}
+
+firebase = pyrebase.initialize_app(config)
+auth = firebase.auth()
+
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
@@ -114,8 +131,42 @@ app.jinja_env.filters['datetime'] = format_datetime
 #----------------------------------------------------------------------------#
 
 @app.route('/')
+@app.route('/index', methods=['GET', 'POST'])
 def index():
-  return render_template('pages/home.html')
+    if (request.method == 'POST'):
+            email = request.form['name']
+            password = request.form['password']
+            try:
+                auth.sign_in_with_email_and_password(email, password)
+                #user_id = auth.get_account_info(user['idToken'])
+                #session['usr'] = user_id
+                return render_template('pages/home.html')
+            except:
+                unsuccessful = 'Please check your credentials'
+                return render_template('index.html', umessage=unsuccessful)
+    return render_template('index.html')
+
+@app.route('/create_account', methods=['GET', 'POST'])
+def create_account():
+    if (request.method == 'POST'):
+            email = request.form['name']
+            password = request.form['password']
+            auth.create_user_with_email_and_password(email, password)
+            return render_template('index.html')
+    return render_template('create_account.html')
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if (request.method == 'POST'):
+            email = request.form['name']
+            auth.send_password_reset_email(email)
+            return render_template('index.html')
+    return render_template('forgot_password.html')
+
+@app.route('/home', methods=['GET', 'POST'])
+def home():
+    return render_template('pages/home.html')
+
 
 
 #  Venues
