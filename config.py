@@ -10,4 +10,5 @@ DEBUG = True
 
 #changed user awadahmed
 # TODO IMPLEMENT DATABASE URL
+#mysql://username:password@server/db
 SQLALCHEMY_DATABASE_URI = 'postgresql://awadahmed@localhost:5432/connect'
